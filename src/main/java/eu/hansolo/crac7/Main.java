@@ -1,7 +1,6 @@
 package eu.hansolo.crac7;
 
 import jdk.crac.*;
-
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
