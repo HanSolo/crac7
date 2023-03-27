@@ -1,6 +1,6 @@
 package eu.hansolo.crac7;
 
-//import jdk.crac.*;
+import jdk.crac.*;
 
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class Main { //implements Resource {
             return RESULTS_SINGLE.size();
         };
 
-        //Core.getGlobalContext().register(Main.this);
+        Core.getGlobalContext().register(Main.this);
 
         init();
 
@@ -61,7 +61,7 @@ public class Main { //implements Resource {
         System.out.println("Total time of compilation -> " + ManagementFactory.getCompilationMXBean().getTotalCompilationTime() + "ms");
     }
 
-    /*
+
     @Override public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {}
 
     @Override public void afterRestore(Context<? extends Resource> context) throws Exception {
@@ -76,7 +76,7 @@ public class Main { //implements Resource {
          System.out.println("Total number of loaded classes -> " + ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount());
          System.out.println("Total time of compilation -> " + ManagementFactory.getCompilationMXBean().getTotalCompilationTime() + "ms");
     }
-    */
+    
 
     private void init() {
         randomNumberPool.clear();
