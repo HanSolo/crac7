@@ -1,7 +1,10 @@
 package eu.hansolo.crac7;
 
 import jdk.crac.*;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8463de25e86f005602034e2e56d3e4c122b00009
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +22,7 @@ import java.util.stream.LongStream;
 
 
 public class Main implements Resource {
+<<<<<<< HEAD
     private static final int                           N                = 500_000; // Max number to evaluate
     private static final Random                        RND              = new Random();
     private static final long                          RUNTIME_IN_NS    = 2_000_000_000;
@@ -33,6 +37,17 @@ public class Main implements Resource {
     private        final ExecutorService               executorService  = Executors.newSingleThreadExecutor();
     private        final Callable<Integer>             task;
     private static       long                          startTime;
+=======
+    private static final Random            RND              = new Random();
+    private static final long              RUNTIME_IN_NS    = 2_000_000_000;
+    private static final int               RANGE            = 25_000;
+    private static final long              SECOND_IN_NS     = 1_000_000_000;
+    private static final List<String>      RESULTS          = new ArrayList<>();
+    private        final List<Integer>     randomNumberPool = new ArrayList<>();
+    private        final ExecutorService   executorService  = Executors.newSingleThreadExecutor();
+    private        final Callable<Integer> task;
+    private static       long              startTime;
+>>>>>>> 8463de25e86f005602034e2e56d3e4c122b00009
 
 
     public Main() {
@@ -76,7 +91,11 @@ public class Main implements Resource {
          System.out.println("Total number of loaded classes -> " + ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount());
          System.out.println("Total time of compilation -> " + ManagementFactory.getCompilationMXBean().getTotalCompilationTime() + "ms");
     }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 8463de25e86f005602034e2e56d3e4c122b00009
 
     private void init() {
         randomNumberPool.clear();
