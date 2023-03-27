@@ -98,7 +98,7 @@ public class Main { //implements Resource {
 
     private void startParallel() {
         FORK_JOIN_POOL.invoke(new EvaluatePrime(0, N));
-        System.out.println("Checking " + RESULTS_PARALLEL.size() + " numbers for prime in parallel took -> " + ((System.nanoTime() - startTime) / SECOND_IN_NS) + "s");
+        System.out.println("Checking " + RESULTS_PARALLEL.size() + " numbers for prime in parallel (" + NO_OF_THREADS +  " threads) took -> " + ((System.nanoTime() - startTime) / SECOND_IN_NS) + "s");
     }
 
     private boolean isPrimeLoop(final long number) {
