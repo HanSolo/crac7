@@ -1,6 +1,6 @@
 package eu.hansolo.crac7;
 
-import jdk.crac.*;
+//import jdk.crac.*;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 
 
-public class Main implements Resource {
+public class Main { //implements Resource {
     private static final long              RUNTIME_IN_NS   = 2_000_000_000;
     private static final int               RANGE           = 25_000;
     private static final long              SECOND_IN_NS    = 1_000_000_000;
@@ -35,19 +35,19 @@ public class Main implements Resource {
             return RESULTS.size();
         };
 
-        Core.getGlobalContext().register(Main.this);
+        //Core.getGlobalContext().register(Main.this);
 
         start();
     }
 
-
+    /*
     @Override public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {}
 
     @Override public void afterRestore(Context<? extends Resource> context) throws Exception {
          startTime = System.nanoTime();
          start();
     }
-
+    */
 
     private void start() {
         try {
