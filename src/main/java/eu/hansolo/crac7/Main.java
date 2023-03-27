@@ -27,7 +27,8 @@ public class Main { //implements Resource {
     private static final List<String>                  RESULTS_SINGLE   = new ArrayList<>();
     private static final ConcurrentSkipListSet<String> RESULTS_PARALLEL = new ConcurrentSkipListSet<>();
     private static final Integer                       NO_OF_PROCESSORS = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
-    private static final ForkJoinPool                  FORK_JOIN_POOL   = new ForkJoinPool(NO_OF_PROCESSORS);
+    private static final Integer                       NO_OF_THREADS    = Runtime.getRuntime().availableProcessors();
+    private static final ForkJoinPool                  FORK_JOIN_POOL   = new ForkJoinPool(NO_OF_THREADS);
     private        final List<Integer>                 randomNumberPool = new ArrayList<>();
     private        final ExecutorService               executorService  = Executors.newSingleThreadExecutor();
     private        final Callable<Integer>             task;
