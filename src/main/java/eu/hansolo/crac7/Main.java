@@ -1,6 +1,7 @@
-package eu.hansolo;
+package eu.hansolo.crac7;
 
 //import jdk.crac.*;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -19,12 +20,10 @@ public class Main { //implements Resource {
     private static final List<String>      RESULTS         = new ArrayList<>();
     private        final ExecutorService   executorService = Executors.newSingleThreadExecutor();
     private        final Callable<Integer> task;
-    private              long              startTime;
+    private static       long              startTime;
 
 
     public Main() {
-        startTime = System.nanoTime();
-
         // Define task
         task = () -> {
             while(System.nanoTime() - startTime < RUNTIME_IN_NS) {
@@ -81,6 +80,11 @@ public class Main { //implements Resource {
 
 
     public static void main(String[] args) {
+        startTime = System.nanoTime();
+        final long currentTime = System.currentTimeMillis();
+        final long vmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+        System.out.println("JVM startup time -> " + (currentTime - vmStartTime) + "ms");
+
         new Main();
     }
 }
