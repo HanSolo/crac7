@@ -146,7 +146,7 @@ public class Main { //implements Resource {
 
 
         @Override public void compute() {
-            if ( (to - from) <= N / (NO_OF_PROCESSORS) ) {
+            if ( (to - from) <= N / (NO_OF_THREADS) ) {
                 for (int i = from; i <= to; i++) {
                     RESULTS_PARALLEL.add(i + " -> " + evaluatePrime(i));
                 }
