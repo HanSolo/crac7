@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 
 
-public class Main implements Resource {
+public class Main { //implements Resource {
     private static final int                            N                = 500_000; // Max number to evaluate
     private static final Random                         RND              = new Random();
     private static final long                           RUNTIME_IN_NS    = 2_000_000_000;
@@ -27,11 +27,9 @@ public class Main implements Resource {
     private static final List<String>                   RESULTS_SYNC     = new ArrayList<>();
     private static final List<String>                   RESULTS_ASYNC    = new ArrayList<>();
     private static final ConcurrentSkipListSet<Integer> RESULTS_PARALLEL = new ConcurrentSkipListSet<>();
-    private static final Integer                        NO_OF_PROCESSORS = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
-    private static final Integer                        NO_OF_THREADS    = Runtime.getRuntime().availableProcessors();
-    private static final ForkJoinPool                   FORK_JOIN_POOL   = new ForkJoinPool(NO_OF_THREADS);
     private        final List<Integer>                  randomNumberPool = new ArrayList<>();
-    private        final ExecutorService                executorService  = Executors.newSingleThreadExecutor();
+    private              ExecutorService                executorService  = Executors.newSingleThreadExecutor();
+    private              ForkJoinPool                   forkJoinPool     = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
     private        final Callable<Integer>              task;
     private static       long                           startTime;
 
@@ -67,25 +65,43 @@ public class Main implements Resource {
     }
 
 
-    @Override public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {}
+    @Override public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {
+        executorService.shutdown();
+        executorService.awaitTermination(1, TimeUnit.SECONDS);
+        if (!executorService.isShutdown()) { executorService.shutdownNow(); }
+
+        forkJoinPool.shutdown();
+        forkJoinPool.awaitTermination(1, TimeUnit.SECONDS);
+        if (!forkJoinPool.isShutdown()) { forkJoinPool.shutdownNow(); }
+    }
 
     @Override public void afterRestore(Context<? extends Resource> context) throws Exception {
-         startTime = System.nanoTime();
+        final int noOfThreads = Runtime.getRuntime().availableProcessors();
 
-         start();
+        RESULTS_SYNC.clear();
+        RESULTS_ASYNC.clear();
+        RESULTS_PARALLEL.clear();
 
-         startTime = System.nanoTime();
+        executorService = Executors.newSingleThreadExecutor();
+        forkJoinPool    = new ForkJoinPool(noOfThreads);
 
-         startAsync();
 
-         startTime = System.nanoTime();
+        startTime = System.nanoTime();
 
-         startParallel();
+        start();
 
-         System.out.println("Total number of loaded classes -> " + ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount());
-         System.out.println("Total time of compilation -> " + ManagementFactory.getCompilationMXBean().getTotalCompilationTime() + "ms");
+        startTime = System.nanoTime();
+
+        startAsync();
+
+        startTime = System.nanoTime();
+
+        startParallel();
+
+        System.out.println("Total number of loaded classes -> " + ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount());
+        System.out.println("Total time of compilation -> " + ManagementFactory.getCompilationMXBean().getTotalCompilationTime() + "ms");
     }
-    
+
 
     private void init() {
         randomNumberPool.clear();
@@ -127,8 +143,9 @@ public class Main implements Resource {
     }
 
     private void startParallel() {
-        FORK_JOIN_POOL.invoke(new CheckForPrime(0, N));
-        System.out.println("Found " + RESULTS_PARALLEL.size() + " primes in range from 0-" + N + " in parallel (" + NO_OF_THREADS +  " threads) -> " + ((System.nanoTime() - startTime) / SECOND_IN_NS) + "s");
+        final int noOfThreads = Runtime.getRuntime().availableProcessors();
+        forkJoinPool.invoke(new CheckForPrime(0, N));
+        System.out.println("Found " + RESULTS_PARALLEL.size() + " primes in range from 0-" + N + " in parallel (" + noOfThreads +  " threads) -> " + ((System.nanoTime() - startTime) / SECOND_IN_NS) + "s");
     }
 
     private boolean isPrimeLoop(final long number) {
@@ -170,8 +187,9 @@ public class Main implements Resource {
 
 
     static class CheckForPrime extends RecursiveAction {
-        private int from;
-        private int to;
+        private final int noOfThreads = Runtime.getRuntime().availableProcessors();
+        private       int from;
+        private       int to;
 
 
         public CheckForPrime(final int from, final int to) {
@@ -181,7 +199,7 @@ public class Main implements Resource {
 
 
         @Override public void compute() {
-            if ( (to - from) <= N / (NO_OF_THREADS) ) {
+            if ( (to - from) <= N / (noOfThreads) ) {
                 for (int i = from; i <= to; i++) {
                     if (isPrime(i)) { RESULTS_PARALLEL.add(i); }
                 }
