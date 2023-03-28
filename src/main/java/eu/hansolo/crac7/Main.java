@@ -163,6 +163,9 @@ public class Main implements Resource {
         final long vmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
         System.out.println("JVM startup time -> " + (currentTime - vmStartTime) + "ms");
         new Main();
+
+        // Keep JVM running to be able to create checkpoint from other shell
+        try { while (true) { Thread.sleep(1000); } } catch (InterruptedException e) { }
     }
 
 
