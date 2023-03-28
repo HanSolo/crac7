@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 
 
-public class Main { //implements Resource {
+public class Main implements Resource {
     private static final int                            N                = 500_000; // Max number to evaluate
     private static final Random                         RND              = new Random();
     private static final long                           RUNTIME_IN_NS    = 2_000_000_000;
