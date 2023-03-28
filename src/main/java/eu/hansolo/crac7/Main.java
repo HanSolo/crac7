@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -19,20 +20,21 @@ import java.util.stream.LongStream;
 
 
 public class Main { //implements Resource {
-    private static final int                           N                = 500_000; // Max number to evaluate
-    private static final Random                        RND              = new Random();
-    private static final long                          RUNTIME_IN_NS    = 2_000_000_000;
-    private static final int                           RANGE            = 25_000;
-    private static final long                          SECOND_IN_NS     = 1_000_000_000;
-    private static final List<String>                  RESULTS_SINGLE   = new ArrayList<>();
-    private static final ConcurrentSkipListSet<String> RESULTS_PARALLEL = new ConcurrentSkipListSet<>();
-    private static final Integer                       NO_OF_PROCESSORS = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
-    private static final Integer                       NO_OF_THREADS    = Runtime.getRuntime().availableProcessors();
-    private static final ForkJoinPool                  FORK_JOIN_POOL   = new ForkJoinPool(NO_OF_THREADS);
-    private        final List<Integer>                 randomNumberPool = new ArrayList<>();
-    private        final ExecutorService               executorService  = Executors.newSingleThreadExecutor();
-    private        final Callable<Integer>             task;
-    private static       long                          startTime;
+    private static final int                            N                = 500_000; // Max number to evaluate
+    private static final Random                         RND              = new Random();
+    private static final long                           RUNTIME_IN_NS    = 2_000_000_000;
+    private static final int                            RANGE            = 25_000;
+    private static final long                           SECOND_IN_NS     = 1_000_000_000;
+    private static final List<String>                   RESULTS_SYNC     = new ArrayList<>();
+    private static final List<String>                   RESULTS_ASYNC    = new ArrayList<>();
+    private static final ConcurrentSkipListSet<Integer> RESULTS_PARALLEL = new ConcurrentSkipListSet<>();
+    private static final Integer                        NO_OF_PROCESSORS = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
+    private static final Integer                        NO_OF_THREADS    = Runtime.getRuntime().availableProcessors();
+    private static final ForkJoinPool                   FORK_JOIN_POOL   = new ForkJoinPool(NO_OF_THREADS);
+    private        final List<Integer>                  randomNumberPool = new ArrayList<>();
+    private        final ExecutorService                executorService  = Executors.newSingleThreadExecutor();
+    private        final Callable<Integer>              task;
+    private static       long                           startTime;
 
 
     public Main() {
@@ -42,9 +44,9 @@ public class Main { //implements Resource {
                 final int     number  = randomNumberPool.get(ThreadLocalRandom.current().nextInt(randomNumberPool.size() - 1));
                 final boolean isPrime = isPrimeLoop(number);
                 //final boolean isPrime = isPrimeStream(number);
-                RESULTS_SINGLE.add(number + " -> " + isPrime);
+                RESULTS_SYNC.add(number + " -> " + isPrime);
             }
-            return RESULTS_SINGLE.size();
+            return RESULTS_SYNC.size();
         };
 
         //Core.getGlobalContext().register(Main.this);
@@ -52,6 +54,10 @@ public class Main { //implements Resource {
         init();
 
         start();
+
+        startTime = System.nanoTime();
+
+        startAsync();
 
         startTime = System.nanoTime();
 
@@ -71,6 +77,10 @@ public class Main { //implements Resource {
 
          startTime = System.nanoTime();
 
+         startAsync();
+
+         startTime = System.nanoTime();
+
          startParallel();
 
          System.out.println("Total number of loaded classes -> " + ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount());
@@ -86,7 +96,7 @@ public class Main { //implements Resource {
     private void start() {
         try {
             final long numberOfTransactions = this.executorService.submit(task).get();
-            System.out.println("Number of transcations in " + (RUNTIME_IN_NS / SECOND_IN_NS) + "s -> " + numberOfTransactions);
+            System.out.println("Number of sync transcations in " + (RUNTIME_IN_NS / SECOND_IN_NS) + "s -> " + numberOfTransactions);
 
             executorService.shutdown();
             executorService.awaitTermination(1, TimeUnit.SECONDS);
@@ -96,9 +106,30 @@ public class Main { //implements Resource {
         }
     }
 
+    private void startAsync() {
+        while(System.nanoTime() - startTime < RUNTIME_IN_NS) {
+            final int number  = randomNumberPool.get(ThreadLocalRandom.current().nextInt(randomNumberPool.size() - 1));
+            CompletableFuture<Boolean> cpf = CompletableFuture.supplyAsync(() -> {
+                if (number < 1) { return false; }
+                boolean isPrime = Boolean.TRUE;
+                for (long n = number; n > 0; n--) {
+                    if (n == number || n == 1 || number % n != 0) { continue; }
+                    isPrime = Boolean.FALSE;
+                    break;
+                }
+                return isPrime;
+            });
+            cpf.thenAccept(result -> {
+                if (System.nanoTime() - startTime < RUNTIME_IN_NS) { RESULTS_ASYNC.add(number + " -> " + result); }
+            });
+        }
+        final long numberOfTransactions = RESULTS_ASYNC.size();
+        System.out.println("Number of async transcations in " + (RUNTIME_IN_NS / SECOND_IN_NS) + "s -> " + numberOfTransactions);
+    }
+
     private void startParallel() {
-        FORK_JOIN_POOL.invoke(new EvaluatePrime(0, N));
-        System.out.println("Checking " + RESULTS_PARALLEL.size() + " numbers for prime in parallel (" + NO_OF_THREADS +  " threads) took -> " + ((System.nanoTime() - startTime) / SECOND_IN_NS) + "s");
+        FORK_JOIN_POOL.invoke(new CheckForPrime(0, N));
+        System.out.println("Found " + RESULTS_PARALLEL.size() + " primes in range from 0-" + N + " in parallel (" + NO_OF_THREADS +  " threads) -> " + ((System.nanoTime() - startTime) / SECOND_IN_NS) + "s");
     }
 
     private boolean isPrimeLoop(final long number) {
@@ -126,6 +157,7 @@ public class Main { //implements Resource {
         return randomNumberPool;
     }
 
+
     public static void main(String[] args) {
         startTime = System.nanoTime();
         final long currentTime = System.currentTimeMillis();
@@ -134,12 +166,13 @@ public class Main { //implements Resource {
         new Main();
     }
 
-    static class EvaluatePrime extends RecursiveAction {
+
+    static class CheckForPrime extends RecursiveAction {
         private int from;
         private int to;
 
 
-        public EvaluatePrime(final int from, final int to) {
+        public CheckForPrime(final int from, final int to) {
             this.from = from;
             this.to   = to;
         }
@@ -148,15 +181,15 @@ public class Main { //implements Resource {
         @Override public void compute() {
             if ( (to - from) <= N / (NO_OF_THREADS) ) {
                 for (int i = from; i <= to; i++) {
-                    RESULTS_PARALLEL.add(i + " -> " + evaluatePrime(i));
+                    if (isPrime(i)) { RESULTS_PARALLEL.add(i); }
                 }
             } else {
                 int mid = (from + to) / 2;
-                invokeAll(new EvaluatePrime(from, mid), new EvaluatePrime(mid + 1, to));
+                invokeAll(new CheckForPrime(from, mid), new CheckForPrime(mid + 1, to));
             }
         }
 
-        private static boolean evaluatePrime(final int number) {
+        private static boolean isPrime(final int number) {
             if (number < 1) { return false; }
             Boolean isPrime = Boolean.TRUE;
             for (long n = number ; n > 0 ; n--) {
