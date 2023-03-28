@@ -76,6 +76,8 @@ public class Main implements Resource {
     }
 
     @Override public void afterRestore(Context<? extends Resource> context) throws Exception {
+        startTime = System.nanoTime();
+        
         final int noOfThreads = Runtime.getRuntime().availableProcessors();
 
         RESULTS_SYNC.clear();
@@ -84,9 +86,6 @@ public class Main implements Resource {
 
         executorService = Executors.newSingleThreadExecutor();
         forkJoinPool    = new ForkJoinPool(noOfThreads);
-
-
-        startTime = System.nanoTime();
 
         start();
 
